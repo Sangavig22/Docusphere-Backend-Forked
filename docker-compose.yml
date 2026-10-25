@@ -8,6 +8,6 @@ services:
       - "8081:80"
     environment:
       - JWT_ENABLED=true
-      - JWT_SECRET=V8pX9iu5gDWzQrHP5Od62XOOiuOnlrtF
+      - JWT_SECRET=${ONLYOFFICE_JWT_SECRET:-docusphere-dev-onlyoffice-secret}
       - JWT_HEADER=Authorization
     restart: always
