@@ -4,6 +4,7 @@ import com.docusphere.backend.authentication.service.security.JwtAuthenticationF
 import com.docusphere.backend.authentication.service.security.OAuth2AuthenticationSuccessHandler;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.Arrays;
+import java.util.List;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -59,7 +60,7 @@ public class SecurityConfig {
                         .successHandler(oAuth2AuthenticationSuccessHandler)
                 )
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/login", "/error", "/favicon.ico").permitAll()
+                        .requestMatchers("/", "/login", "/error", "/favicon.ico", "/actuator/**").permitAll()
                         .requestMatchers("/oauth2/**", "/api/auth/oauth2/callback/**").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/ocr/**").permitAll()
@@ -95,11 +96,22 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         String frontendOrigin = normalizeOrigin(appConfig.getFrontendUrl());
-        configuration.setAllowedOrigins(Arrays.asList(
-                frontendOrigin
-        ));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        List<String> allowedOrigins = new java.util.ArrayList<>();
+        allowedOrigins.add("http://localhost:[*]");
+        allowedOrigins.add("http://127.0.0.1:[*]");
+        allowedOrigins.add("https://*.vercel.app");
+        if (frontendOrigin != null && !frontendOrigin.isBlank()) {
+            for (String origin : frontendOrigin.split(",")) {
+                String trimmed = origin.trim();
+                if (!trimmed.isEmpty()) {
+                    allowedOrigins.add(trimmed);
+                }
+            }
+        }
+        configuration.setAllowedOriginPatterns(allowedOrigins);
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
+        configuration.setExposedHeaders(Arrays.asList("Authorization", "Content-Disposition", "Set-Cookie"));
         configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
